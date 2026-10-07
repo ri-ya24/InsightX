@@ -1,0 +1,12 @@
+pandas
+numpy
+requests
+praw
+python-dotenv
+sqlalchemy
+psycopg2-binary
+scikit-learn
+nltk
+plotly
+streamlit
+google-genai
