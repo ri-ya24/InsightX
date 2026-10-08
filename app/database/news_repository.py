@@ -76,3 +76,16 @@ def save_articles(articles, topic):
 
     finally:
         session.close()
+def get_articles(topic=None):
+    session = SessionLocal()
+
+    try:
+        query = session.query(NewsArticle)
+
+        if topic:
+            query = query.filter(NewsArticle.topic == topic)
+
+        return query.order_by(NewsArticle.published_at.desc()).all()
+
+    finally:
+        session.close()
