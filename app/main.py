@@ -1,44 +1,73 @@
-from app.data.news_api import fetch_news
-from app.database.news_repository import save_articles, get_articles
-from app.processing.cleaning import prepare_article
-from app.analytics.keywords import extract_keywords, extract_key_phrases
+from app.services.news_pipeline import run_news_pipeline
 
 
-topic = "artificial intelligence"
+def main():
 
-articles = fetch_news(topic, page_size=5)
+    topic = input(
+        "\nEnter a topic to analyse: "
+    ).strip()
 
-print("Articles fetched:", len(articles))
+    if not topic:
+        print("Please enter a valid topic.")
+        return
 
-saved_count = save_articles(articles, topic)
+    try:
 
-print("Articles saved to database:", saved_count)
-saved_articles = get_articles(topic)
+        result = run_news_pipeline(topic)
 
-print("Articles in database:", len(saved_articles))
-if saved_articles:
-    cleaned_article = prepare_article(saved_articles[0])
+        # Article date range
+        article_dates = [
+            article["published_at"]
+            for article in result["cleaned_articles"]
+            if article.get("published_at") is not None
+        ]
 
-    print()
-    print("Cleaned article:")
-    print("Title:", cleaned_article["title"])
-    print("Combined text:", cleaned_article["combined_text"])
-    cleaned_articles = [
-    prepare_article(article)
-    for article in saved_articles
-]
+        if article_dates:
+            print("\nArticle Date Range:")
+            print("Oldest article:", min(article_dates).date())
+            print("Newest article:", max(article_dates).date())
+        else:
+            print("\nPublished dates unavailable.")
 
-keywords = extract_keywords(cleaned_articles, top_n=10)
+        # InsightX results
+        print("\n========== INSIGHTX ==========")
 
-print()
-print("Top keywords:")
+        print("Topic:", result["topic"])
 
-for keyword, count in keywords:
-    print(keyword, "->", count)
-key_phrases = extract_key_phrases(cleaned_articles, top_n=10)
+        print(
+            "Articles fetched:",
+            result["fetched_count"]
+        )
 
-print()
-print("Top key phrases:")
+        print(
+            "New articles saved:",
+            result["saved_count"]
+        )
 
-for phrase, count in key_phrases:
-    print(phrase, "->", count)
+        print(
+            "Total articles in database:",
+            result["total_articles"]
+        )
+
+        print("\nTop Keywords:")
+
+        for word, count in result["keywords"]:
+            print(f"{word} -> {count}")
+
+        print("\nTop Key Phrases:")
+
+        for phrase, count in result["key_phrases"]:
+            print(f"{phrase} -> {count}")
+
+        print("\n==============================")
+
+    except Exception as error:
+
+        print("\nInsightX pipeline failed:")
+        print(error)
+
+        raise
+
+
+if __name__ == "__main__":
+    main()
